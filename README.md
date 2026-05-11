@@ -1,30 +1,33 @@
-# Proyecto Docker & Git: Virtualización para Sistemas Embebidos e IoT
+# Proyecto Docker y Git: Virtualización para Sistemas Embebidos e IoT
 
-Este repositorio contiene el desarrollo y la documentación técnica de la implementación de contenedores Docker para la ejecución de aplicaciones en **C++** y **Python**. El enfoque principal es demostrar la portabilidad de software y la consistencia de entornos de ejecución en el desarrollo de ingeniería.
+Este repositorio contiene el desarrollo y la documentación técnica de la implementación de contenedores Docker para la ejecución de aplicaciones en C++ y Python. El enfoque principal es demostrar la portabilidad de software y la consistencia de entornos de ejecución en el desarrollo de ingeniería.
 
 ---
 
-## ¿Qué se hizo en este proyecto?
+## Metodología de Desarrollo y Virtualización
 
-El objetivo fue encapsular dos flujos de trabajo técnicos dentro de contenedores aislados. La principal ventaja de esta arquitectura es que el software no depende de las librerías instaladas localmente en el sistema operativo, sino de una **Imagen Docker** preconfigurada.
+El proyecto se diseñó bajo el principio de **Infraestructura como Código (IaC)**. En lugar de instalar compiladores y librerías directamente en el sistema operativo anfitrión (Ubuntu), se definieron archivos de configuración (Dockerfiles) que dictan el entorno exacto necesario para cada tarea.
 
-### Puntos Clave de la Implementación:
-* **Dockerización de C++:** Se configuró un entorno basado en Ubuntu 22.04 que incluye el compilador `g++` y la herramienta de graficado técnico `gnuplot`.
-* **Automatización de Procesos:** El contenedor no solo compila, sino que ejecuta la lógica matemática y procesa la salida gráfica de forma secuencial.
-* **Persistencia mediante Volúmenes:** Se utilizó el parámetro de volumen `-v` para mapear la carpeta del host con la del contenedor, permitiendo que archivos generados internamente (como imágenes `.png`) persistan en nuestra máquina física.
+### ¿Por qué Docker en este proyecto?
+1. **Aislamiento de Dependencias**: El contenedor de Julia utiliza `gnuplot` y `build-essential`, mientras que el de Python requiere un entorno interpretado con `matplotlib`. Ambos coexisten sin generar conflictos de versiones.
+2. **Portabilidad**: El repositorio incluye todo lo necesario para que cualquier desarrollador con Docker instalado pueda replicar los resultados exactos sin configurar manualmente su sistema.
+3. **Eficiencia en Capas**: Se utilizaron imágenes base oficiales para reducir la superficie de ataque y el tamaño del despliegue.
 
 ---
 
 ## Entorno 1: Generación de Conjunto de Julia (C++)
 
-El código fuente implementa el algoritmo del **Conjunto de Julia**, un fractal que requiere cálculos iterativos con números complejos.
+El código fuente implementa el algoritmo del **Conjunto de Julia**, un fractal que requiere cálculos iterativos con números complejos para determinar la convergencia de una función en el plano complejo.
 
-### Procedimiento Técnico:
-1. **Compilación:** Se utiliza `g++` con el estándar de C++.
-2. **Generación de Datos:** El ejecutable crea un archivo `julia_set.txt` con coordenadas (X, Y) y el valor de iteración (Z).
-3. **Renderizado:** `gnuplot` lee el archivo de texto y aplica un mapeo de colores `pm3d` para generar la imagen final.
+### Procedimiento Técnico Detallado:
+1. **Instalación Automatizada**: El Dockerfile actualiza los repositorios de Ubuntu e instala `g++` para la compilación y `gnuplot` para la salida gráfica.
+2. **Ciclo de Vida**: 
+   - El código en `src/main.cpp` se compila generando un binario en la carpeta `bin/`.
+   - El binario genera un archivo de datos crudos `julia_set.txt`.
+   - Se ejecuta un script de Gnuplot (`scripts/plot.gp`) que mapea esos datos a una imagen PNG.
+3. **Sincronización de Volúmenes**: Se mapea la ruta local con `/usr/src/app` en el contenedor para extraer los resultados.
 
-### Evidencias del Proceso
+### Evidencias del Proceso (C++)
 
 <table style="width:100%">
   <tr>
@@ -32,16 +35,22 @@ El código fuente implementa el algoritmo del **Conjunto de Julia**, un fractal 
     <th style="text-align:center">Captura de Pantalla</th>
   </tr>
   <tr>
-    <td><b>1. Construcción (Build):</b> Creación de la imagen a partir del Dockerfile. Se instalan las dependencias <code>build-essential</code> y <code>gnuplot</code>.</td>
-    <td align="center"><img src="contenedor-julia/evidencias/build_julia.png" width="400" alt="Docker Build Julia"></td>
+    <td><b>1. Construcción de Imagen (Build):</b> Se muestra la creación de capas y la instalación de herramientas de compilación.</td>
+    <td align="center">
+      <img src="contenedor-julia/evidencias/build_julia.png" width="450" alt="Build de Docker Julia">
+    </td>
   </tr>
   <tr>
-    <td><b>2. Ejecución (Run):</b> El contenedor procesa el código C++. Aquí se observa la salida en terminal confirmando la creación de los datos.</td>
-    <td align="center"><img src="contenedor-julia/evidencias/run_julia.png" width="400" alt="Docker Run Julia"></td>
+    <td><b>2. Ejecución del Contenedor (Run):</b> Confirmación de la compilación exitosa y generación del archivo de datos dentro del entorno aislado.</td>
+    <td align="center">
+      <img src="contenedor-julia/evidencias/run_julia.png" width="450" alt="Ejecución de Julia en Docker">
+    </td>
   </tr>
   <tr>
-    <td><b>3. Resultado Final:</b> Visualización del fractal generado en formato PNG, guardado automáticamente en la carpeta <code>output/</code>.</td>
-    <td align="center"><img src="contenedor-julia/evidencias/resultado_fractal.png" width="300" alt="Fractal Julia PNG"></td>
+    <td><b>3. Resultado Visual:</b> Fractal del Conjunto de Julia generado mediante el mapeo de colores pm3d.</td>
+    <td align="center">
+      <img src="contenedor-julia/evidencias/resultado_fractal.png" width="350" alt="Resultado Fractal Julia">
+    </td>
   </tr>
 </table>
 
@@ -49,14 +58,14 @@ El código fuente implementa el algoritmo del **Conjunto de Julia**, un fractal 
 
 ## Entorno 2: Análisis Estadístico (Python) - Contenedor Adicional
 
-Como propuesta de valor, se añadió un contenedor que utiliza **Python 3.9** para demostrar la facilidad con la que se pueden desplegar herramientas de Ciencia de Datos e IoT.
+Se integró un segundo contenedor basado en **Python 3.9-slim** para demostrar la versatilidad de Docker en el manejo de librerías de alto nivel para Ciencia de Datos.
 
 ### Procedimiento Técnico:
-1. **Instalación:** El Dockerfile utiliza `pip` para instalar `numpy` y `matplotlib`.
-2. **Lógica:** El script `app.py` genera una señal senoidal amortiguada.
-3. **Salida:** Se exporta un gráfico de alta resolución directamente a la carpeta de evidencias.
+1. **Gestión de Paquetes**: Uso de `pip` dentro del Dockerfile para instalar `numpy` (cálculo numérico) y `matplotlib` (visualización).
+2. **Procesamiento de Señal**: El script `app.py` genera una señal senoidal amortiguada, simulando un sistema físico de segundo orden.
+3. **Salida de Datos**: La gráfica se guarda directamente en la carpeta de salida vinculada al volumen.
 
-### Evidencias del Segundo Contenedor
+### Evidencias del Segundo Contenedor (Python)
 
 <table style="width:100%">
   <tr>
@@ -64,25 +73,30 @@ Como propuesta de valor, se añadió un contenedor que utiliza **Python 3.9** pa
     <th style="text-align:center">Captura de Pantalla</th>
   </tr>
   <tr>
-    <td><b>Ejecución de Python:</b> El contenedor corre el script y gestiona las librerías necesarias de forma aislada.</td>
-    <td align="center"><img src="contenedor-julia/evidencias/ejecucion_python.png" width="400" alt="Ejecución Python"></td>
+    <td><b>Descarga de Capas (Build):</b> Proceso de "Pulling" de la imagen oficial de Python y configuración del entorno interpretado.</td>
+    <td align="center">
+      <img src="contenedor-julia/evidencias/build_python.png" width="450" alt="Build de Python">
+    </td>
   </tr>
   <tr>
-    <td><b>Gráfica Resultante:</b> Representación visual de los datos procesados en Python.</td>
-    <td align="center"><img src="contenedor-julia/evidencias/resultado_python.png" width="300" alt="Gráfica Python PNG"></td>
+    <td><b>Ejecución y Gráfica:</b> Salida de la terminal y visualización de la gráfica estadística generada por Matplotlib.</td>
+    <td align="center">
+      <img src="contenedor-julia/evidencias/resultado_python.png" width="350" alt="Gráfica generada en Python">
+    </td>
   </tr>
 </table>
 
 ---
 
-## Configuración del Repositorio Git
+## Configuración y Estructura del Repositorio
 
-Se aplicaron buenas prácticas de control de versiones:
-* **Estructuración:** Separación clara entre entornos de C++ y Python.
-* **Limpieza:** Uso de un archivo `.gitignore` para evitar la subida de binarios pesados o archivos temporales innecesarios.
+Para garantizar la limpieza del repositorio, se implementó un archivo `.gitignore` que evita la persistencia de binarios (`.o`, `.exe`) y archivos de datos temporales (`.txt`), manteniendo solo el código fuente y la documentación esencial.
+
+### Organización de Carpetas:
+<img src="contenedor-julia/evidencias/estructura_archivos.png" width="550" alt="Estructura de Directorios">
 
 ---
 
 ### **Autor**
-**Diego Aarón Cárdenas Mendoza** Estudiante de Ingeniería en Sistemas Computacionales
+**Diego Aarón Cárdenas Mendoza** Estudiante de Ingeniería en Sistemas Computacionales  
 **ESCOM - IPN**
