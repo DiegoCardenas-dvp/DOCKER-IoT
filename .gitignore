@@ -1,0 +1,5 @@
+**/bin/
+**/obj/
+**/*.o
+**/*.txt
+**/output/*.png
